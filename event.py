@@ -14,11 +14,12 @@ class MarketEvent(Event):
     corresponding bars.
     """
 
-    def __init__(self):
+    def __init__(self, ticker):
         """
         Initialises the MarketEvent.
         """
         self.type = 'MARKET'
+        self.ticker = ticker
 
 
 class SignalEvent(Event):
@@ -27,13 +28,13 @@ class SignalEvent(Event):
     This is received by a Portfolio object and acted upon.
     """
     
-    def __init__(self, strategy_id, symbol, datetime, signal_type, strength):
+    def __init__(self, strategy_id, ticker, datetime, signal_type, strength):
         """
         Initialises the SignalEvent.
 
         Parameters:
         strategy_id - The unique ID of the strategy sending the signal.
-        symbol - The ticker symbol, e.g. 'GOOG'.
+        ticker - The ticker symbol, e.g. 'GOOG'.
         datetime - The timestamp at which the signal was generated.
         signal_type - 'LONG' or 'SHORT'.
         strength - An adjustment factor "suggestion" used to scale 
@@ -41,7 +42,7 @@ class SignalEvent(Event):
         """
         self.strategy_id = strategy_id
         self.type = 'SIGNAL'
-        self.symbol = symbol
+        self.ticker = ticker
         self.datetime = datetime
         self.signal_type = signal_type
         self.strength = strength
