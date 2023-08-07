@@ -13,6 +13,7 @@ import asyncio
 from config import *
 import queue
 from urllib.parse import quote_plus
+import json
 
 from event import MarketEvent
 
@@ -47,7 +48,6 @@ class DataHandler(object):
         """
         self.events = events
         self.ticker_list = ticker_list
-        self.df = None
         self.continue_backtest = True  
         self.max_rows = max_rows     
         self.latest_data = {}
@@ -104,7 +104,54 @@ class DataHandler(object):
 
 
 class RealtimeData(DataHandler):
-    pass
+    def __init__(self, events, ticker_list, max_rows=10000):
+        super(RealtimeData, self).__init__(events, ticker_list, max_rows)
+        self.df = None
+        self.continue_backtest = False
+        self.latest_data = {}
+        
+    async def stream(self, ticker, ts):
+        """Stream bars from tradestation"""
+        barsback = 1
+        while True:
+            try:
+                access_token = ts.get_access_token()
+                url = f"{API_BASE_URL}/{API_STREAM_BARCHARTS_URI}/"
+                ulr += f"{ticker}?interval=1&unit=minute&barsback={barsback}"
+                headers = {'Authorization': f'Bearer {access_token}'}
+                print(url)
+                print(f"Header = {headers}")
+                res = requests.get(url = url, headers=headers, stream=True)
+                if res.status_code != 200: 
+                    print(f'Status code from bar stream for {ticker}: {res.status_code}')
+                    barsback = 10
+                    continue
+                for line in res.iter_lines():
+                    await asyncio.sleep(0)
+                    if line:
+                        if line is None or len(line) == 0:
+                            continue
+                        print(line)
+                        bar_json = json.loads(line)
+                        bar = Bar(ticker, bar_json)
+                        if bar.isValid == True:
+                            #print(bar)
+                            self.events.put(bar)
+                        else:
+                            if bar.isHeartbeat() is True:
+                                #print(f"Heartbeat: {ticker}")
+                                self.events.put(bar)
+                            else:
+                                print(f"Invalid bar: {ticker} {bar_json}")
+                       
+            
+            except Exception as ex:
+                print(f'{ticker}: Sleeping 5 seconds, will try to reconnect again.')
+                print(ex)
+                await asyncio.sleep(5)
+                barsback = 10
+                pass
+        
 
 class HistoricalDbData(DataHandler):
 
