@@ -104,6 +104,8 @@ class DataHandler(object):
 
 
 class RealtimeData(DataHandler):
+    """Class for handling realtime data from tradestation."""
+
     def __init__(self, events, ticker_list, max_rows=10000):
         super(RealtimeData, self).__init__(events, ticker_list, max_rows)
         self.df = None
@@ -123,7 +125,7 @@ class RealtimeData(DataHandler):
                 print(f"Header = {headers}")
                 res = requests.get(url = url, headers=headers, stream=True)
                 if res.status_code != 200: 
-                    print(f'Status code from bar stream for {ticker}: {res.status_code}')
+                    #print(f'Status code from bar stream for {ticker}: {res.status_code}')
                     barsback = 10
                     continue
                 for line in res.iter_lines():
@@ -133,16 +135,20 @@ class RealtimeData(DataHandler):
                             continue
                         print(line)
                         bar_json = json.loads(line)
-                        bar = Bar(ticker, bar_json)
+                        print(bar_json)
+                        event = MarketEvent(ticker)
+                        self.events.put(event)
+                        """bar = Bar(ticker, bar_json)
                         if bar.isValid == True:
                             #print(bar)
+
                             self.events.put(bar)
                         else:
                             if bar.isHeartbeat() is True:
                                 #print(f"Heartbeat: {ticker}")
                                 self.events.put(bar)
                             else:
-                                print(f"Invalid bar: {ticker} {bar_json}")
+                                print(f"Invalid bar: {ticker} {bar_json}")"""
                        
             
             except Exception as ex:
@@ -151,9 +157,57 @@ class RealtimeData(DataHandler):
                 await asyncio.sleep(5)
                 barsback = 10
                 pass
+
+    def get_latest_bar(self, symbol):
+        """
+        Returns the last bar updated.
+        """
+        raise NotImplementedError("Should implement get_latest_bar()")
+
+  
+    def get_latest_bars(self, symbol, N=1):
+        """
+        Returns the last N bars updated.
+        """
+        pass
+
+    def get_latest_bar_datetime(self, symbol):
+        """
+        Returns a Python datetime object for the last bar.
+        """
+        pass
+
+    def get_latest_bar_value(self, symbol, val_type):
+        """
+        Returns one of the Open, High, Low, Close, Volume or OI
+        from the last bar.
+        """
+        pass
+
+    def get_latest_bars_values(self, symbol, val_type, N=1):
+        """
+        Returns the last N bar values from the 
+        latest_symbol list, or N-k if less available.
+        """
+        pass
+
+
+    def create_stream_tasks(self, ts):
+        """Create tasks for streaming bars from tradestation.
+        Args:
+            ts: Tradestation object
+        Returns:
+            tasks: list of tasks
+        """
+        tasks = []
+        for ticker in self.ticker_list:
+            tasks.append(self.stream(ticker, ts))
+        return tasks
         
 
+
 class HistoricalDbData(DataHandler):
+    """Class for handling historic data from a MySQL database."""
 
     def __init__(self, events, ticker_list, start_date, end_date, max_rows=10000):
         """
