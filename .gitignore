@@ -162,3 +162,5 @@ config.py
 jrbot2_venv/
 notes.txt
 test.py
+logs/
+refresh_token_cache.txt
