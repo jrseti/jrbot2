@@ -3,6 +3,7 @@ import sys
 import time
 from filelock import FileLock
 import psutil
+import daemon
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
@@ -132,5 +133,76 @@ def get_pids():
     return pids_info 
 
 def clean():
-    """Clean the pid file by removing any dead processes"""
+    """Clean the pid file by removing any dead processes. Processes are not killed."""
     add_process_to_pid_list(-1, None)
+
+def kill_process(name):
+    """Kill a process based on the process name
+    Args:
+        name (str): The process name. If name is None, kill ALL processes.
+    """
+    MAX_SECS_TO_WAIT_FOR_KILL = 10
+    secs_count = 0
+    found = False
+    pids_info = get_pids()
+    for pid, pname, _ in pids_info:
+        if name is None or pname == name:
+            found = True
+            os.kill(pid, 9)
+            print(f"Killed process {pid}, {pname}")
+            # The process does not die immediately, wait till it is dead so the following clean will work.
+            while psutil.pid_exists(pid):
+                time.sleep(0.1)
+                secs_count += 0.1
+                if secs_count > MAX_SECS_TO_WAIT_FOR_KILL:
+                    print(f"Unable to kill process {pid} {pname}")
+                    break
+
+    if not found:
+        print(f"No process found with name {name}")
+
+    # Now clean any dead processes from the pid file
+    clean()
+
+def daemonize(name, task, kill_existing=True):
+    """Daemonize the current process.
+    Args:
+        name (str): The process name. This can be any name to identify the task,
+            but it should be unique. Does not necessarily have to be the name of
+            the python module.
+        task (function): The task to run in the daemon process
+        kill_existing (bool): Kill any existing processes/daemon with the same name before creating this new one.
+    """
+    if kill_existing:
+        kill_process(name)
+    with daemon.DaemonContext():
+        add_this_process_to_pid_list(name)
+        task()
+
+if __name__ == "__main__":
+    # Get command line arguments
+    if len(sys.argv) == 1:
+        print("Usage: python processes.py <command> <name>")
+        print("Commands:")
+        print("  clean - clean the pid file, no processes are killed")
+        print("  kill <name> - kill a process by name, if name is not specified, all processes are killed. Note: the pid.txt is updated after the process is killed")
+    if len(sys.argv) > 1:
+        command = sys.argv[1]
+        if command == "clean":
+            print("Cleaning pid file")
+            #kill_process(None)
+            clean()
+        elif command == "kill":
+            if len(sys.argv) > 2:
+                name = sys.argv[2]
+            else:
+                name = None
+            kill_process(name)
+        elif command == "list":
+            pids_info = get_pids()
+            if len(pids_info) == 0:
+                print("No processes are in the list of PIDs")
+            for pid, name, mem in pids_info:
+                print(f"{pid}, {name}, {mem:.2f} MB")
+        else:
+            print(f"Unknown command: {command}")
