@@ -1,0 +1,3 @@
+#!/bin/bash
+# Call processes/processes.py with the arguments on the command line
+python3 processes/processes.py $@
