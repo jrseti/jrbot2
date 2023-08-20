@@ -15,7 +15,7 @@ class Processes:
     """Class containing static methods for managing processes in the jrbot environment."""
 
     @staticmethod
-    def get_process_memory(pid):
+    def get_process_memory(pid: int) -> float:
         """Get the memory usage of the current process
         Returns:
             float: The memory usage in MB, otherwise -1 if the process
@@ -28,7 +28,7 @@ class Processes:
             return -1
 
     @staticmethod
-    def add_process_to_pid_list(pid, name):
+    def add_process_to_pid_list(pid: int, name: str) -> None:
         """Add the current process to the pid file.
         First we read the pid file to get the list of processes. Then we clean the
         list by removing any processes that are no longer running. Finally we add
@@ -68,7 +68,7 @@ class Processes:
             pass
 
     @staticmethod
-    def add_this_process_to_pid_list(name):
+    def add_this_process_to_pid_list(name: str) -> None:
         """Add the current process to the pid file.
         Args:
             name (str): The process name
@@ -76,7 +76,7 @@ class Processes:
         Processes.add_process_to_pid_list(os.getpid(), name)    
 
     @staticmethod
-    def remove_process_from_list(process_name):
+    def remove_process_from_list(process_name: str) -> None:
         """Remove a process from the list based on the process name
         Args:
             name (str): The process name
@@ -110,7 +110,7 @@ class Processes:
             pass
 
     @staticmethod
-    def get_pids():
+    def get_pids() -> None:
         """Get the process ids from the pid file
         Returns:
             list: A list of tuples containing the process id, name and 
@@ -141,12 +141,12 @@ class Processes:
         return pids_info 
 
     @staticmethod
-    def clean():
+    def clean() -> None:
         """Clean the pid file by removing any dead processes. Processes are not killed."""
         Processes.add_process_to_pid_list(-1, None)
 
     @staticmethod
-    def kill_process(name, silent=False):
+    def kill_process(name: str, silent: bool = False) -> None:
         """Kill a process based on the process name
         Args:
             name (str): The process name. If name is None, kill ALL processes.
@@ -178,8 +178,10 @@ class Processes:
         # Now clean any dead processes from the pid file
         Processes.clean()
 
+        return None
+
     @staticmethod
-    def daemonize(task, task_args, name, working_dir, kill_existing):
+    def daemonize(task, task_args: dict, name: str, working_dir: str, kill_existing: str) -> None:
         """Daemonize the current process.
         Args:
             task (function): The task to run in the daemon process
@@ -200,6 +202,8 @@ class Processes:
             if working_dir is not None:
                 os.chdir(working_dir)
             task(task_args)
+
+        return None
 
 if __name__ == "__main__":
 
