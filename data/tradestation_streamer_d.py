@@ -14,6 +14,11 @@ from ts_auth0 import TS_Auth
 from config import API_KEY, API_SECRET_KEY
 from config import API_BASE_URL, API_STREAM_BARCHARTS_URI
 
+"""
+This script streams bar data from TradeStation and sends it to a redis-stream.
+Command line arguments alow for starting the script as a daemon or not.
+"""
+
 LOG_NAME = "trade_station_data_d"
 
 def _bar_to_redis_stream(ticker: str, bar: dict, logger: Logger) -> None:
