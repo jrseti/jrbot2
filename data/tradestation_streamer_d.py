@@ -31,6 +31,8 @@ def _bar_to_redis_stream(ticker: str, bar: dict, logger: Logger) -> None:
         None
     """
     logger.info(f"Ticker: {ticker} Bar: {bar}")
+
+    #TODO: Send the bar to the redis stream 
     pass
 
 async def stream_bars(ts: TS_Auth, ticker: str, logger: Logger) -> None:
